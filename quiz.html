@@ -269,7 +269,7 @@
     }
 
     async function submit() {
-      if (!GAS_WEBAPP_URL || GAS_WEBAPP_URL.includes("PASTE_YOUR_GAS_WEB_APP_URL_HERE")) {
+      if (!GAS_WEBAPP_URL || GAS_WEBAPP_URL.includes("https://script.google.com/macros/s/AKfycbzYMLxTPI3dn61ip0-gqYdR2Xxw-MiUjbFtavEwst33Q2ZXDaFiBw0J2MayAdUgp0_f/exec")) {
         statusEl.innerHTML = `<span class="err">你还没填 GAS_WEBAPP_URL（quiz.html 顶部那行）</span>`;
         return;
       }
