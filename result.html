@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="zh">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>测试结果</title>
+</head>
+<body style="font-family: system-ui; max-width: 820px; margin: 40px auto; padding: 0 16px;">
+  <div id="app"></div>
+
+  <script>
+    const RESULT_MAP = {
+      rocket:    { title: "小火箭",    img: "img/rocket.png" },
+      captain:   { title: "小队长",    img: "img/captain.png" },
+      commander: { title: "小指挥",    img: "img/commander.png" },
+      joker:     { title: "小开心果",  img: "img/joker.png" },
+      angel:     { title: "小天使",    img: "img/angel.png" },
+      butler:    { title: "小管家",    img: "img/butler.png" },
+      chill:     { title: "小躺平大师", img: "img/chill.png" },
+      moon:      { title: "小月亮",    img: "img/moon.png" },
+      conch:     { title: "小海螺",    img: "img/conch.png" }
+    };
+
+    const type = new URLSearchParams(window.location.search).get("type");
+    const data = RESULT_MAP[type];
+    const app = document.getElementById("app");
+
+    if (data) {
+      app.innerHTML = `
+        <h1>${data.title}</h1>
+        <img src="${data.img}" style="width:280px; margin:20px 0;" />
+        <p><a href="quiz.html">再测一次</a></p>
+      `;
+    } else {
+      app.innerHTML = `
+        <h1>没有找到结果</h1>
+        <a href="quiz.html">返回测试</a>
+      `;
+    }
+  </script>
+</body>
+</html>
