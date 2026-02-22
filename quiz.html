@@ -268,11 +268,13 @@
       return { ok:true, totals, answers };
     }
 
-    async function submit() {
+    // ✅ 不用 fetch，改成表单提交（绕过 CORS）
+    function submit() {
       if (!GAS_WEBAPP_URL || !GAS_WEBAPP_URL.startsWith("https://script.google.com/macros/s/")) {
         statusEl.innerHTML = `<span class="err">GAS_WEBAPP_URL 格式不对，请填 Web App 的 /exec 链接</span>`;
         return;
       }
+
       const r = calcTotals();
       if (!r.ok) {
         statusEl.innerHTML = `<span class="err">${r.err}</span>`;
@@ -280,26 +282,22 @@
       }
 
       submitBtn.disabled = true;
-      statusEl.textContent = "正在计算结果…";
+      statusEl.innerHTML = `<span class="ok">已提交，正在跳转结果页…</span>`;
 
-      try {
-        const resp = await fetch(GAS_WEBAPP_URL, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ totals: r.totals, answers: r.answers })
-        });
+      const payload = { totals: r.totals, answers: r.answers };
 
-        const data = await resp.json();
-        if (data.error) throw new Error(data.error);
-        if (!data.redirect) throw new Error("后端未返回 redirect");
+      const form = document.createElement("form");
+      form.method = "POST";
+      form.action = GAS_WEBAPP_URL;
 
-        statusEl.innerHTML = `<span class="ok">完成，正在跳转…</span>`;
-        window.location.href = data.redirect;
+      const input = document.createElement("input");
+      input.type = "hidden";
+      input.name = "payload";
+      input.value = JSON.stringify(payload);
 
-      } catch (e) {
-        statusEl.innerHTML = `<span class="err">提交失败：${e.message}</span>`;
-        submitBtn.disabled = false;
-      }
+      form.appendChild(input);
+      document.body.appendChild(form);
+      form.submit();
     }
 
     submitBtn.addEventListener("click", submit);
