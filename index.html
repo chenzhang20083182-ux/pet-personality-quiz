@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="zh">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>宠物性格测试</title>
+  <style>
+    body { font-family: system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,"PingFang SC","Microsoft YaHei",sans-serif; background:#fafafa; }
+    .wrap { max-width: 920px; margin: 28px auto; padding: 0 16px; }
+    .card { background:#fff; border:1px solid #eee; border-radius:16px; padding: 18px; }
+    h1 { font-size: 22px; margin: 0 0 6px; }
+    .muted { color:#666; line-height:1.7; margin:0 0 12px; }
+    .q { border-top:1px solid #f0f0f0; padding: 14px 0; }
+    .q:first-of-type { border-top: 0; }
+    .q-title { font-weight: 650; margin-bottom: 8px; }
+    label { display:block; padding: 8px 10px; border:1px solid #eee; border-radius: 12px; margin: 8px 0; cursor:pointer; }
+    input[type="radio"]{ margin-right: 8px; }
+    .btn { border:0; background:#111; color:#fff; padding: 12px 14px; border-radius: 12px; cursor:pointer; }
+    .btn:disabled { opacity: .5; cursor:not-allowed; }
+    .bar { display:flex; align-items:center; gap:12px; margin-top: 14px; flex-wrap:wrap; }
+    .err { color:#b00020; }
+    .ok { color:#0b6b0b; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1>宠物性格测试（24题）</h1>
+      <p class="muted">请选择最符合你家宠物“多数时候”的选项。提交后会生成结果页。</p>
+
+      <form id="quiz"></form>
+
+      <div class="bar">
+        <button class="btn" id="submitBtn" type="button">提交并查看结果</button>
+        <span id="status" class="muted"></span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ✅ 填你部署后的 GAS Web App URL（形如 https://script.google.com/macros/s/xxx/exec）
+    const GAS_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbzYMLxTPI3dn61ip0-gqYdR2Xxw-MiUjbFtavEwst33Q2ZXDaFiBw0J2MayAdUgp0_f/exec";
+
+    // 24题计分表（每个选项对应 E/A/O/N/C 增量）
+    const QUESTIONS = [
+      { id: 1, text: "在熟悉的环境里，它平时更接近哪种状态？",
+        options: [
+          { k:"A", t:"经常主动走动、自己找事情", v:{E:2,A:0,O:1,N:0,C:0}},
+          { k:"B", t:"有活动，但多在固定范围", v:{E:1,A:0,O:0,N:0,C:1}},
+          { k:"C", t:"安静待着，留意周围", v:{E:0,A:0,O:1,N:0,C:1}},
+          { k:"D", t:"多半跟着你行动", v:{E:0,A:2,O:0,N:0,C:1}},
+        ]
+      },
+      { id: 2, text: "日常生活中，它的注意力更多放在？",
+        options: [
+          { k:"A", t:"自己正在做的事情", v:{E:2,A:0,O:0,N:0,C:0}},
+          { k:"B", t:"周围的动静和变化", v:{E:0,A:0,O:1,N:1,C:0}},
+          { k:"C", t:"你的举动和状态", v:{E:0,A:2,O:0,N:0,C:0}},
+          { k:"D", t:"熟悉的位置或物品", v:{E:0,A:0,O:0,N:0,C:2}},
+        ]
+      },
+      { id: 3, text: "当日常作息被打乱时，它通常会？",
+        options: [
+          { k:"A", t:"很快适应，照样活动", v:{E:2,A:0,O:0,N:0,C:0}},
+          { k:"B", t:"明显变得烦躁或不安", v:{E:0,A:0,O:0,N:2,C:0}},
+          { k:"C", t:"行动减少，变得安静", v:{E:0,A:0,O:0,N:1,C:1}},
+          { k:"D", t:"更依赖固定的位置或习惯", v:{E:0,A:0,O:0,N:0,C:2}},
+        ]
+      },
+      { id: 4, text: "在需要做选择时，它更像？",
+        options: [
+          { k:"A", t:"先行动，再调整", v:{E:2,A:0,O:1,N:0,C:0}},
+          { k:"B", t:"看清楚再决定", v:{E:0,A:0,O:1,N:0,C:1}},
+          { k:"C", t:"等你给出信号", v:{E:0,A:2,O:0,N:0,C:1}},
+          { k:"D", t:"尽量保持不变", v:{E:0,A:0,O:0,N:0,C:2}},
+        ]
+      },
+      { id: 5, text: "当你不在身边时，它更常见的状态是？",
+        options: [
+          { k:"A", t:"自己活动", v:{E:2,A:0,O:0,N:0,C:0}},
+          { k:"B", t:"安静待着", v:{E:0,A:0,O:0,N:0,C:1}},
+          { k:"C", t:"留意门口或声音", v:{E:0,A:0,O:1,N:0,C:0}},
+          { k:"D", t:"表现出不安", v:{E:0,A:0,O:0,N:2,C:0}},
+        ]
+      },
+      { id: 6, text: "面对新情况时，它更倾向于？",
+        options: [
+          { k:"A", t:"自己去尝试", v:{E:2,A:0,O:2,N:0,C:0}},
+          { k:"B", t:"先观察再靠近", v:{E:0,A:0,O:1,N:0,C:1}},
+          { k:"C", t:"等你带着", v:{E:0,A:2,O:0,N:0,C:1}},
+          { k:"D", t:"能避就避", v:{E:0,A:0,O:0,N:2,C:0}},
+        ]
+      },
+      { id: 7, text: "整体来看，它是否有“自己的一套做法”？",
+        options: [
+          { k:"A", t:"非常明显", v:{E:1,A:0,O:1,N:0,C:0}},
+          { k:"B", t:"有，但不执着", v:{E:0,A:0,O:0,N:0,C:1}},
+          { k:"C", t:"多数听你安排", v:{E:0,A:2,O:0,N:0,C:1}},
+          { k:"D", t:"很少，坚持性不强", v:{E:0,A:0,O:0,N:1,C:0}},
+        ]
+      },
+      { id: 8, text: "大多数时候，它对变化的态度是？",
+        options: [
+          { k:"A", t:"变化会让它更兴奋", v:{E:1,A:0,O:2,N:0,C:0}},
+          { k:"B", t:"能接受，但需要时间", v:{E:0,A:0,O:1,N:0,C:1}},
+          { k:"C", t:"容易紧张", v:{E:0,A:0,O:0,N:2,C:0}},
+          { k:"D", t:"更希望保持原样", v:{E:0,A:0,O:0,N:0,C:2}},
+        ]
+      },
+      { id: 9, text: "平时它的行动节奏更像？",
+        options: [
+          { k:"A", t:"快而主动", v:{E:2,A:0,O:1,N:0,C:0}},
+          { k:"B", t:"稳定", v:{E:0,A:0,O:0,N:0,C:1}},
+          { k:"C", t:"慢而谨慎", v:{E:0,A:0,O:0,N:1,C:1}},
+          { k:"D", t:"跟随你的节奏", v:{E:0,A:2,O:0,N:0,C:0}},
+        ]
+      },
+      { id:10, text: "在陌生环境中，它通常？",
+        options: [
+          { k:"A", t:"更活跃", v:{E:2,A:0,O:1,N:0,C:0}},
+          { k:"B", t:"谨慎行动", v:{E:0,A:0,O:1,N:1,C:0}},
+          { k:"C", t:"观察为主", v:{E:0,A:0,O:1,N:0,C:1}},
+          { k:"D", t:"靠近你", v:{E:0,A:2,O:0,N:0,C:1}},
+        ]
+      },
+      { id:11, text: "小变化对它情绪的影响程度是？",
+        options: [
+          { k:"A", t:"几乎不受影响", v:{E:0,A:0,O:0,N:0,C:1}},
+          { k:"B", t:"偶尔会", v:{E:0,A:0,O:0,N:1,C:0}},
+          { k:"C", t:"比较明显", v:{E:0,A:0,O:0,N:2,C:0}},
+          { k:"D", t:"非常依赖你的安抚", v:{E:0,A:1,O:0,N:1,C:0}},
+        ]
+      },
+      { id:12, text: "整体来看，它更看重？",
+        options: [
+          { k:"A", t:"自由活动", v:{E:2,A:0,O:0,N:0,C:0}},
+          { k:"B", t:"新鲜探索", v:{E:0,A:0,O:2,N:0,C:0}},
+          { k:"C", t:"稳定安全", v:{E:0,A:0,O:0,N:0,C:2}},
+          { k:"D", t:"陪伴关系", v:{E:0,A:2,O:0,N:0,C:0}},
+        ]
+      },
+      { id:13, text: "在没有明确指令时，它更常？",
+        options: [
+          { k:"A", t:"自己找事做", v:{E:2,A:0,O:0,N:0,C:0}},
+          { k:"B", t:"待在熟悉的位置", v:{E:0,A:0,O:0,N:0,C:1}},
+          { k:"C", t:"观察周围", v:{E:0,A:0,O:1,N:0,C:0}},
+          { k:"D", t:"靠近你等待", v:{E:0,A:0,O:0,N:2,C:0}},
+        ]
+      },
+      { id:14, text: "在重复的日常中，它通常？",
+        options: [
+          { k:"A", t:"自己找变化", v:{E:1,A:0,O:2,N:0,C:0}},
+          { k:"B", t:"习惯并接受", v:{E:0,A:0,O:0,N:0,C:1}},
+          { k:"C", t:"显得有些无聊", v:{E:0,A:0,O:0,N:1,C:0}},
+          { k:"D", t:"更需要你的互动", v:{E:0,A:2,O:0,N:0,C:0}},
+        ]
+      },
+      { id:15, text: "当周围同时发生很多事情时，它更可能？",
+        options: [
+          { k:"A", t:"更活跃", v:{E:2,A:0,O:1,N:0,C:0}},
+          { k:"B", t:"专注观察一处", v:{E:0,A:0,O:1,N:0,C:1}},
+          { k:"C", t:"明显不安", v:{E:0,A:0,O:0,N:2,C:0}},
+          { k:"D", t:"靠近熟悉的人或物", v:{E:0,A:1,O:0,N:0,C:1}},
+        ]
+      },
+      { id:16, text: "面对不确定情况时，它更依赖？",
+        options: [
+          { k:"A", t:"自己的尝试", v:{E:2,A:0,O:1,N:0,C:0}},
+          { k:"B", t:"观察反馈", v:{E:0,A:0,O:1,N:0,C:1}},
+          { k:"C", t:"你的反应", v:{E:0,A:2,O:0,N:0,C:0}},
+          { k:"D", t:"熟悉规则", v:{E:0,A:0,O:0,N:0,C:2}},
+        ]
+      },
+      { id:17, text: "面对限制或规则时，它通常？",
+        options: [
+          { k:"A", t:"尝试突破", v:{E:2,A:0,O:1,N:0,C:0}},
+          { k:"B", t:"先理解规则", v:{E:0,A:0,O:1,N:0,C:1}},
+          { k:"C", t:"接受并遵守", v:{E:0,A:0,O:0,N:0,C:2}},
+          { k:"D", t:"表现出紧张", v:{E:0,A:0,O:0,N:2,C:0}},
+        ]
+      },
+      { id:18, text: "遇到障碍或困难时，它更可能？",
+        options: [
+          { k:"A", t:"尝试不同方法", v:{E:2,A:0,O:2,N:0,C:0}},
+          { k:"B", t:"停下来观察", v:{E:0,A:0,O:1,N:0,C:1}},
+          { k:"C", t:"等你处理", v:{E:0,A:2,O:0,N:0,C:1}},
+          { k:"D", t:"放弃或回避", v:{E:0,A:0,O:0,N:2,C:0}},
+        ]
+      },
+      { id:19, text: "平时它更容易被什么吸引？",
+        options: [
+          { k:"A", t:"可以行动的事情", v:{E:2,A:0,O:0,N:0,C:0}},
+          { k:"B", t:"新鲜的信息", v:{E:0,A:0,O:2,N:0,C:0}},
+          { k:"C", t:"安全稳定的事物", v:{E:0,A:0,O:0,N:0,C:2}},
+          { k:"D", t:"与你的互动", v:{E:0,A:2,O:0,N:0,C:0}},
+        ]
+      },
+      { id:20, text: "在多宠或人多的环境中，它更像？",
+        options: [
+          { k:"A", t:"更活跃", v:{E:2,A:0,O:0,N:0,C:0}},
+          { k:"B", t:"观察为主", v:{E:0,A:0,O:1,N:0,C:1}},
+          { k:"C", t:"偏安静", v:{E:0,A:0,O:0,N:0,C:1}},
+          { k:"D", t:"明显紧张", v:{E:0,A:0,O:0,N:2,C:0}},
+        ]
+      },
+      { id:21, text: "多数时候，它的节奏是？",
+        options: [
+          { k:"A", t:"主动带头", v:{E:2,A:0,O:0,N:0,C:0}},
+          { k:"B", t:"稳定推进", v:{E:0,A:0,O:0,N:0,C:1}},
+          { k:"C", t:"谨慎慢行", v:{E:0,A:0,O:0,N:1,C:1}},
+          { k:"D", t:"跟随你", v:{E:0,A:2,O:0,N:0,C:0}},
+        ]
+      },
+      { id:22, text: "面对新路线或新地方，它更可能？",
+        options: [
+          { k:"A", t:"主动探索", v:{E:1,A:0,O:2,N:0,C:0}},
+          { k:"B", t:"边走边看", v:{E:0,A:0,O:1,N:0,C:1}},
+          { k:"C", t:"偏向原路线", v:{E:0,A:0,O:0,N:0,C:2}},
+          { k:"D", t:"显得紧张", v:{E:0,A:0,O:0,N:2,C:0}},
+        ]
+      },
+      { id:23, text: "当你情绪变化时，它通常？",
+        options: [
+          { k:"A", t:"不太受影响", v:{E:0,A:0,O:0,N:0,C:0}},
+          { k:"B", t:"留意你的状态", v:{E:0,A:0,O:1,N:0,C:0}},
+          { k:"C", t:"明显靠近你", v:{E:0,A:2,O:0,N:0,C:0}},
+          { k:"D", t:"自己变得不安", v:{E:0,A:0,O:0,N:2,C:0}},
+        ]
+      },
+      { id:24, text: "综合来看，它更像哪一类？",
+        options: [
+          { k:"A", t:"行动导向", v:{E:2,A:0,O:0,N:0,C:0}},
+          { k:"B", t:"思考观察", v:{E:0,A:0,O:1,N:0,C:1}},
+          { k:"C", t:"稳定保守", v:{E:0,A:0,O:0,N:0,C:2}},
+          { k:"D", t:"情绪敏感", v:{E:0,A:0,O:0,N:2,C:0}},
+        ]
+      },
+    ];
+
+    const quizEl = document.getElementById("quiz");
+    const statusEl = document.getElementById("status");
+    const submitBtn = document.getElementById("submitBtn");
+
+    function render() {
+      quizEl.innerHTML = QUESTIONS.map(q => `
+        <div class="q">
+          <div class="q-title">Q${q.id}. ${q.text}</div>
+          ${q.options.map(opt => `
+            <label>
+              <input type="radio" name="q${q.id}" value="${opt.k}" />
+              <strong>${opt.k}.</strong> ${opt.t}
+            </label>
+          `).join("")}
+        </div>
+      `).join("");
+    }
+
+    function calcTotals() {
+      const totals = {E:0,A:0,O:0,N:0,C:0};
+      const answers = {};
+      for (const q of QUESTIONS) {
+        const picked = quizEl.querySelector(`input[name="q${q.id}"]:checked`);
+        if (!picked) return { ok:false, err:`请完成第 ${q.id} 题` };
+        const opt = q.options.find(x => x.k === picked.value);
+        answers[`q${q.id}`] = picked.value;
+        for (const k of ["E","A","O","N","C"]) totals[k] += (opt.v[k] || 0);
+      }
+      return { ok:true, totals, answers };
+    }
+
+    async function submit() {
+      if (!GAS_WEBAPP_URL || GAS_WEBAPP_URL.includes("PASTE_YOUR_GAS_WEB_APP_URL_HERE")) {
+        statusEl.innerHTML = `<span class="err">你还没填 GAS_WEBAPP_URL（quiz.html 顶部那行）</span>`;
+        return;
+      }
+
+      const r = calcTotals();
+      if (!r.ok) {
+        statusEl.innerHTML = `<span class="err">${r.err}</span>`;
+        return;
+      }
+
+      submitBtn.disabled = true;
+      statusEl.textContent = "正在计算结果…";
+
+      try {
+        const resp = await fetch(GAS_WEBAPP_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ totals: r.totals, answers: r.answers })
+        });
+
+        const data = await resp.json();
+        if (data.error) throw new Error(data.error);
+        if (!data.redirect) throw new Error("后端未返回 redirect");
+
+        statusEl.innerHTML = `<span class="ok">完成，正在跳转…</span>`;
+        window.location.href = data.redirect;
+
+      } catch (e) {
+        statusEl.innerHTML = `<span class="err">提交失败：${e.message}</span>`;
+        submitBtn.disabled = false;
+      }
+    }
+
+    submitBtn.addEventListener("click", submit);
+    render();
+  </script>
+</body>
+</html>
