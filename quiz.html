@@ -269,11 +269,10 @@
     }
 
     async function submit() {
-      if (!GAS_WEBAPP_URL || GAS_WEBAPP_URL.includes("https://script.google.com/macros/s/AKfycbzYMLxTPI3dn61ip0-gqYdR2Xxw-MiUjbFtavEwst33Q2ZXDaFiBw0J2MayAdUgp0_f/exec")) {
-        statusEl.innerHTML = `<span class="err">你还没填 GAS_WEBAPP_URL（quiz.html 顶部那行）</span>`;
+      if (!GAS_WEBAPP_URL || !GAS_WEBAPP_URL.startsWith("https://script.google.com/macros/s/")) {
+        statusEl.innerHTML = `<span class="err">GAS_WEBAPP_URL 格式不对，请填 Web App 的 /exec 链接</span>`;
         return;
       }
-
       const r = calcTotals();
       if (!r.ok) {
         statusEl.innerHTML = `<span class="err">${r.err}</span>`;
