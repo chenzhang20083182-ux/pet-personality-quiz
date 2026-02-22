@@ -10,15 +10,15 @@
 
   <script>
     const RESULT_MAP = {
-      rocket:    { title: "小火箭",    img: "img/rocket.png" },
-      captain:   { title: "小队长",    img: "img/captain.png" },
-      commander: { title: "小指挥",    img: "img/commander.png" },
-      joker:     { title: "小开心果",  img: "img/joker.png" },
-      angel:     { title: "小天使",    img: "img/angel.png" },
-      butler:    { title: "小管家",    img: "img/butler.png" },
+      rocket:    { title: "小火箭",     img: "img/rocket.png" },
+      captain:   { title: "小队长",     img: "img/captain.png" },
+      commander: { title: "小指挥",     img: "img/commander.png" },
+      joker:     { title: "小开心果",   img: "img/joker.png" },
+      angel:     { title: "小天使",     img: "img/angel.png" },
+      butler:    { title: "小管家",     img: "img/butler.png" },
       chill:     { title: "小躺平大师", img: "img/chill.png" },
-      moon:      { title: "小月亮",    img: "img/moon.png" },
-      conch:     { title: "小海螺",    img: "img/conch.png" }
+      moon:      { title: "小月亮",     img: "img/moon.png" },
+      conch:     { title: "小海螺",     img: "img/conch.png" }
     };
 
     const type = new URLSearchParams(window.location.search).get("type");
@@ -34,7 +34,7 @@
     } else {
       app.innerHTML = `
         <h1>没有找到结果</h1>
-        <a href="quiz.html">返回测试</a>
+        <p><a href="quiz.html">返回测试</a></p>
       `;
     }
   </script>
